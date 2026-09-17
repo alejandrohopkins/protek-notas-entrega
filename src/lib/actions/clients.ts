@@ -27,7 +27,7 @@ export async function createClientAction(
   let clientId: number;
   try {
     const input = readClientInput(formData);
-    clientId = createClient(input).id;
+    clientId = (await createClient(input)).id;
   } catch (err) {
     if (err instanceof ValidationError) return { error: err.message };
     if (isUniqueConstraintError(err)) return { error: "Ya existe un cliente registrado con ese RIF." };
@@ -46,7 +46,7 @@ export async function updateClientAction(
     const id = Number(formData.get("id"));
     if (!id) return { error: "Cliente inválido." };
     const input = readClientInput(formData);
-    updateClient(id, input);
+    await updateClient(id, input);
     revalidatePath("/clientes");
     revalidatePath(`/clientes/${id}`);
     return { success: "Cliente actualizado." };
@@ -61,7 +61,7 @@ export async function updateClientAction(
 export async function setClientActiveAction(formData: FormData): Promise<void> {
   const id = Number(formData.get("id"));
   const active = formData.get("active") === "1";
-  if (id) setClientActive(id, active);
+  if (id) await setClientActive(id, active);
   revalidatePath("/clientes");
   revalidatePath(`/clientes/${id}`);
 }

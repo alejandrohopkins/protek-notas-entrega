@@ -9,7 +9,7 @@ export default async function ClientesPage({
   const sp = await searchParams;
   const q = (sp.q ?? "").trim().toLowerCase();
   const showAll = sp.all === "1";
-  const clients = listClients({ includeInactive: showAll });
+  const clients = await listClients({ includeInactive: showAll });
   const filtered = q
     ? clients.filter(
         (c) => c.name.toLowerCase().includes(q) || c.rif.toLowerCase().includes(q),

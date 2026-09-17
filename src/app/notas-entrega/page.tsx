@@ -6,8 +6,8 @@ import { formatDate, formatMoney, noteNumber } from "@/lib/format";
 
 export default async function NotasEntregaPage() {
   await connection();
-  const notes = listDeliveryNotes();
-  const company = getCompany();
+  const notes = await listDeliveryNotes();
+  const company = await getCompany();
 
   return (
     <div>

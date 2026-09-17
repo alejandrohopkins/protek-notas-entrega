@@ -53,10 +53,10 @@ export async function createProductAction(
       formData.get("initialStock") || "0",
       "El inventario inicial",
     );
-    const product = createProduct(input);
+    const product = await createProduct(input);
     productId = product.id;
     if (initialStock > 0) {
-      registerMovement({
+      await registerMovement({
         productId,
         type: "ENTRADA",
         quantity: initialStock,
@@ -81,7 +81,7 @@ export async function updateProductAction(
     const id = Number(formData.get("id"));
     if (!id) return { error: "Producto inválido." };
     const input = await readProductInput(formData);
-    updateProduct(id, input);
+    await updateProduct(id, input);
     revalidatePath("/productos");
     revalidatePath(`/productos/${id}`);
     return { success: "Producto actualizado." };
@@ -96,7 +96,7 @@ export async function updateProductAction(
 export async function setProductActiveAction(formData: FormData): Promise<void> {
   const id = Number(formData.get("id"));
   const active = formData.get("active") === "1";
-  if (id) setProductActive(id, active);
+  if (id) await setProductActive(id, active);
   revalidatePath("/productos");
   revalidatePath(`/productos/${id}`);
 }
@@ -114,7 +114,7 @@ export async function registerMovementAction(
     }
     const quantity = requireNonNegativeNumber(formData.get("quantity"), "La cantidad");
     const note = optionalString(formData.get("note"));
-    const newBalance = registerMovement({ productId, type, quantity, note });
+    const newBalance = await registerMovement({ productId, type, quantity, note });
     revalidatePath(`/productos/${productId}`);
     revalidatePath("/productos");
     revalidatePath("/kardex");

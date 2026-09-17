@@ -36,7 +36,7 @@ export async function createDeliveryNoteAction(
       lines.push({ productId, quantity, unitPrice });
     }
 
-    const note = createDeliveryNote({ clientId, date, notes, lines });
+    const note = await createDeliveryNote({ clientId, date, notes, lines });
     noteId = note.id;
   } catch (err) {
     if (err instanceof ValidationError) return { error: err.message };
@@ -55,7 +55,7 @@ export async function voidDeliveryNoteAction(formData: FormData): Promise<void> 
   const id = Number(formData.get("id"));
   if (id) {
     try {
-      voidDeliveryNote(id);
+      await voidDeliveryNote(id);
     } catch (err) {
       console.error(err);
     }

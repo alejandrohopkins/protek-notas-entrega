@@ -11,9 +11,9 @@ export default async function FacturadoPage({
   const sp = await searchParams;
   const from = sp.from || undefined;
   const to = sp.to || undefined;
-  const company = getCompany();
-  const rows = billedByClient({ from, to });
-  const total = totalBilled({ from, to });
+  const company = await getCompany();
+  const rows = await billedByClient({ from, to });
+  const total = await totalBilled({ from, to });
 
   return (
     <div>

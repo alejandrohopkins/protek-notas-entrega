@@ -4,7 +4,7 @@ import EmpresaForm from "./EmpresaForm";
 
 export default async function EmpresaPage() {
   await connection();
-  const company = getCompany();
+  const company = await getCompany();
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="mb-1 text-xl font-semibold text-slate-900">Datos de la empresa</h1>

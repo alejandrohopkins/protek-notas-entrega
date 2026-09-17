@@ -15,7 +15,9 @@ export interface DeliveryNoteListItem extends DeliveryNote {
   client_rif: string;
 }
 
-export function listDeliveryNotes(opts: { clientId?: number } = {}): DeliveryNoteListItem[] {
+export async function listDeliveryNotes(
+  opts: { clientId?: number } = {},
+): Promise<DeliveryNoteListItem[]> {
   const where = opts.clientId ? "WHERE dn.client_id = ?" : "";
   const params = opts.clientId ? [opts.clientId] : [];
   return queryAll<DeliveryNoteListItem>(
@@ -28,24 +30,24 @@ export function listDeliveryNotes(opts: { clientId?: number } = {}): DeliveryNot
   );
 }
 
-export function getDeliveryNoteById(id: number): DeliveryNote | undefined {
+export async function getDeliveryNoteById(id: number): Promise<DeliveryNote | undefined> {
   return queryOne<DeliveryNote>("SELECT * FROM delivery_notes WHERE id = ?", [id]);
 }
 
-export function getDeliveryNoteItems(deliveryNoteId: number): DeliveryNoteItem[] {
+export async function getDeliveryNoteItems(deliveryNoteId: number): Promise<DeliveryNoteItem[]> {
   return queryAll<DeliveryNoteItem>(
     "SELECT * FROM delivery_note_items WHERE delivery_note_id = ? ORDER BY id ASC",
     [deliveryNoteId],
   );
 }
 
-export function createDeliveryNote(params: {
+export async function createDeliveryNote(params: {
   clientId: number;
   date: string;
   notes: string;
   lines: DeliveryNoteLine[];
-}): DeliveryNote {
-  const client = getClientById(params.clientId);
+}): Promise<DeliveryNote> {
+  const client = await getClientById(params.clientId);
   if (!client || !client.active) {
     throw new Error("Selecciona un cliente válido.");
   }
@@ -65,7 +67,7 @@ export function createDeliveryNote(params: {
   }
 
   for (const line of consolidated.values()) {
-    const product = getProductById(line.productId);
+    const product = await getProductById(line.productId);
     if (!product || !product.active) {
       throw new Error("Uno de los productos seleccionados ya no está disponible.");
     }
@@ -76,27 +78,29 @@ export function createDeliveryNote(params: {
     }
   }
 
-  return runInTransaction((db) => {
+  return runInTransaction(async (tx) => {
     const total = params.lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
-    const info = db
-      .prepare(
-        `INSERT INTO delivery_notes (client_id, date, status, notes, total, created_at)
-         VALUES (?, ?, 'EMITIDA', ?, ?, ?)`,
-      )
-      .run(params.clientId, params.date, params.notes, total, nowIso());
-    const noteId = Number(info.lastInsertRowid);
+    const inserted = await queryOne<{ id: number }>(
+      `INSERT INTO delivery_notes (client_id, date, status, notes, total, created_at)
+       VALUES (?, ?, 'EMITIDA', ?, ?, ?) RETURNING id`,
+      [params.clientId, params.date, params.notes, total, nowIso()],
+      tx,
+    );
+    const noteId = inserted!.id;
 
     for (const line of params.lines) {
-      const product = getProductById(line.productId)!;
+      const product = (await getProductById(line.productId))!;
       const subtotal = line.quantity * line.unitPrice;
-      db.prepare(
+      await queryAll(
         `INSERT INTO delivery_note_items (delivery_note_id, product_id, product_name, unit_price, quantity, subtotal)
          VALUES (?, ?, ?, ?, ?, ?)`,
-      ).run(noteId, line.productId, product.name, line.unitPrice, line.quantity, subtotal);
+        [noteId, line.productId, product.name, line.unitPrice, line.quantity, subtotal],
+        tx,
+      );
     }
 
     for (const line of consolidated.values()) {
-      applyMovement(db, {
+      await applyMovement(tx, {
         productId: line.productId,
         type: "SALIDA",
         quantity: line.quantity,
@@ -104,26 +108,30 @@ export function createDeliveryNote(params: {
       });
     }
 
-    return queryOne<DeliveryNote>("SELECT * FROM delivery_notes WHERE id = ?", [noteId])!;
+    return (await queryOne<DeliveryNote>(
+      "SELECT * FROM delivery_notes WHERE id = ?",
+      [noteId],
+      tx,
+    ))!;
   });
 }
 
-export function voidDeliveryNote(id: number): DeliveryNote {
-  const note = getDeliveryNoteById(id);
+export async function voidDeliveryNote(id: number): Promise<DeliveryNote> {
+  const note = await getDeliveryNoteById(id);
   if (!note) throw new Error("Nota de entrega no encontrada.");
   if (note.status === "ANULADA") throw new Error("Esta nota ya está anulada.");
 
-  return runInTransaction((db) => {
-    const items = getDeliveryNoteItems(id);
+  return runInTransaction(async (tx) => {
+    const items = await getDeliveryNoteItems(id);
     for (const item of items) {
-      applyMovement(db, {
+      await applyMovement(tx, {
         productId: item.product_id,
         type: "ENTRADA",
         quantity: item.quantity,
         reference: `Anulación nota N.º ${String(id).padStart(6, "0")}`,
       });
     }
-    db.prepare("UPDATE delivery_notes SET status = 'ANULADA' WHERE id = ?").run(id);
-    return queryOne<DeliveryNote>("SELECT * FROM delivery_notes WHERE id = ?", [id])!;
+    await queryAll("UPDATE delivery_notes SET status = 'ANULADA' WHERE id = ?", [id], tx);
+    return (await queryOne<DeliveryNote>("SELECT * FROM delivery_notes WHERE id = ?", [id], tx))!;
   });
 }

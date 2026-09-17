@@ -14,11 +14,11 @@ export default async function ClienteDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const client = getClientById(Number(id));
+  const client = await getClientById(Number(id));
   if (!client) notFound();
 
-  const notes = listDeliveryNotes({ clientId: client.id });
-  const company = getCompany();
+  const notes = await listDeliveryNotes({ clientId: client.id });
+  const company = await getCompany();
   const totalInvoiced = notes
     .filter((n) => n.status === "EMITIDA")
     .reduce((sum, n) => sum + n.total, 0);

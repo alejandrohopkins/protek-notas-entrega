@@ -36,7 +36,7 @@ export async function updateCompanyAction(
       logoDataUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
     }
 
-    updateCompany({ name, rif, address, phone, email, currency, logoDataUrl, removeLogo });
+    await updateCompany({ name, rif, address, phone, email, currency, logoDataUrl, removeLogo });
     revalidatePath("/", "layout");
     return { success: "Datos de la empresa actualizados." };
   } catch (err) {

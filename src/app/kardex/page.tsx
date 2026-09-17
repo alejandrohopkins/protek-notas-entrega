@@ -14,11 +14,11 @@ export default async function KardexPage({
   searchParams: Promise<{ productId?: string; from?: string; to?: string }>;
 }) {
   const sp = await searchParams;
-  const products = listProducts({ includeInactive: true });
+  const products = await listProducts({ includeInactive: true });
   const productId = sp.productId ? Number(sp.productId) : undefined;
-  const product = productId ? getProductById(productId) : undefined;
+  const product = productId ? await getProductById(productId) : undefined;
   const movements = productId
-    ? listMovements({ productId, from: sp.from || undefined, to: sp.to || undefined })
+    ? await listMovements({ productId, from: sp.from || undefined, to: sp.to || undefined })
     : [];
 
   return (

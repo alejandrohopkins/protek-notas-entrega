@@ -1,11 +1,8 @@
 export class ValidationError extends Error {}
 
 export function isUniqueConstraintError(err: unknown): boolean {
-  return (
-    err instanceof Error &&
-    (err as NodeJS.ErrnoException).code === "ERR_SQLITE_ERROR" &&
-    /UNIQUE constraint failed/.test(err.message)
-  );
+  // '23505' es el código SQLSTATE de Postgres para unique_violation.
+  return err instanceof Error && (err as { code?: string }).code === "23505";
 }
 
 export function requireString(value: FormDataEntryValue | null, label: string): string {

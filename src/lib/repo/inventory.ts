@@ -1,26 +1,26 @@
-import type { DatabaseSync, SQLInputValue } from "node:sqlite";
+import type { Runner } from "@/lib/db";
 import { nowIso, queryAll, runInTransaction } from "@/lib/db";
 import { getProductById } from "@/lib/repo/products";
 import type { InventoryMovement, MovementType } from "@/lib/types";
 
-export function listMovements(opts: {
+export async function listMovements(opts: {
   productId?: number;
   from?: string;
   to?: string;
-}): InventoryMovement[] {
+}): Promise<InventoryMovement[]> {
   const clauses: string[] = [];
-  const params: SQLInputValue[] = [];
+  const params: unknown[] = [];
 
   if (opts.productId) {
     clauses.push("product_id = ?");
     params.push(opts.productId);
   }
   if (opts.from) {
-    clauses.push("date(date) >= date(?)");
+    clauses.push("date::date >= ?::date");
     params.push(opts.from);
   }
   if (opts.to) {
-    clauses.push("date(date) <= date(?)");
+    clauses.push("date::date <= ?::date");
     params.push(opts.to);
   }
 
@@ -38,8 +38,8 @@ function computeBalance(currentStock: number, type: MovementType, quantity: numb
 }
 
 /** Inserts a movement row and updates the product's stock inside an existing transaction. */
-export function applyMovement(
-  db: DatabaseSync,
+export async function applyMovement(
+  tx: Runner,
   params: {
     productId: number;
     type: MovementType;
@@ -47,8 +47,8 @@ export function applyMovement(
     reference?: string;
     note?: string;
   },
-): number {
-  const product = getProductById(params.productId);
+): Promise<number> {
+  const product = await getProductById(params.productId);
   if (!product) throw new Error("Producto no encontrado.");
 
   const newBalance = computeBalance(product.stock, params.type, params.quantity);
@@ -59,19 +59,21 @@ export function applyMovement(
   const magnitude =
     params.type === "AJUSTE" ? Math.abs(newBalance - product.stock) : params.quantity;
 
-  db.prepare("UPDATE products SET stock = ? WHERE id = ?").run(newBalance, params.productId);
-  db.prepare(
+  await queryAll("UPDATE products SET stock = ? WHERE id = ?", [newBalance, params.productId], tx);
+  await queryAll(
     `INSERT INTO inventory_movements (product_id, date, type, quantity, balance_after, reference, note, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(
-    params.productId,
-    nowIso(),
-    params.type,
-    magnitude,
-    newBalance,
-    params.reference ?? "",
-    params.note ?? "",
-    nowIso(),
+    [
+      params.productId,
+      nowIso(),
+      params.type,
+      magnitude,
+      newBalance,
+      params.reference ?? "",
+      params.note ?? "",
+      nowIso(),
+    ],
+    tx,
   );
 
   return newBalance;
@@ -83,13 +85,13 @@ const MANUAL_REFERENCE: Record<MovementType, string> = {
   AJUSTE: "Ajuste por conteo",
 };
 
-export function registerMovement(params: {
+export async function registerMovement(params: {
   productId: number;
   type: MovementType;
   quantity: number;
   note?: string;
-}): number {
-  return runInTransaction((db) =>
-    applyMovement(db, { ...params, reference: MANUAL_REFERENCE[params.type] }),
+}): Promise<number> {
+  return runInTransaction((tx) =>
+    applyMovement(tx, { ...params, reference: MANUAL_REFERENCE[params.type] }),
   );
 }

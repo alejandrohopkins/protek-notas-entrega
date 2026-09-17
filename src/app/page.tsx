@@ -15,14 +15,15 @@ function monthStart(): string {
 
 export default async function DashboardPage() {
   await connection();
-  const company = getCompany();
-  const clients = listClients();
-  const products = listProducts();
-  const recentNotes = listDeliveryNotes().slice(0, 5);
+  const company = await getCompany();
+  const clients = await listClients();
+  const products = await listProducts();
+  const recentNotes = (await listDeliveryNotes()).slice(0, 5);
 
   const from = monthStart();
-  const billedThisMonth = totalBilled({ from });
-  const notesThisMonth = countNotesEmitted({ from });
+  const billedThisMonth = await totalBilled({ from });
+  const notesThisMonth = await countNotesEmitted({ from });
+  const inventoryValue = await totalInventoryValue();
   const lowStock = products.filter((p) => p.stock <= LOW_STOCK_THRESHOLD);
 
   return (
@@ -120,7 +121,7 @@ export default async function DashboardPage() {
           <div className="mt-3 border-t border-slate-100 pt-3 text-sm text-slate-500">
             Valor total del inventario:{" "}
             <span className="font-semibold text-slate-800">
-              {formatMoney(totalInventoryValue(), company.currency)}
+              {formatMoney(inventoryValue, company.currency)}
             </span>
           </div>
         </div>

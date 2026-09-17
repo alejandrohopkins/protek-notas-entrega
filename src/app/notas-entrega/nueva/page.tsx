@@ -6,8 +6,8 @@ import NuevaNotaForm from "./NuevaNotaForm";
 
 export default async function NuevaNotaPage() {
   await connection();
-  const clients = listClients();
-  const products = listProducts();
+  const clients = await listClients();
+  const products = await listProducts();
 
   return (
     <div>

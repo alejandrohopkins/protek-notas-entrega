@@ -20,10 +20,10 @@ export default async function ProductoDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = getProductById(Number(id));
+  const product = await getProductById(Number(id));
   if (!product) notFound();
 
-  const movements = listMovements({ productId: product.id }).slice(0, 10);
+  const movements = (await listMovements({ productId: product.id })).slice(0, 10);
 
   return (
     <div className="space-y-6">

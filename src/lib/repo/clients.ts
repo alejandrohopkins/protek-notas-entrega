@@ -1,18 +1,18 @@
-import { getDb, nowIso, queryAll, queryOne } from "@/lib/db";
+import { nowIso, queryAll, queryOne } from "@/lib/db";
 import type { Client } from "@/lib/types";
 
-export function listClients(opts: { includeInactive?: boolean } = {}): Client[] {
+export async function listClients(opts: { includeInactive?: boolean } = {}): Promise<Client[]> {
   const sql = opts.includeInactive
-    ? "SELECT * FROM clients ORDER BY name COLLATE NOCASE ASC"
-    : "SELECT * FROM clients WHERE active = 1 ORDER BY name COLLATE NOCASE ASC";
+    ? "SELECT * FROM clients ORDER BY lower(name) ASC"
+    : "SELECT * FROM clients WHERE active = 1 ORDER BY lower(name) ASC";
   return queryAll<Client>(sql);
 }
 
-export function getClientById(id: number): Client | undefined {
+export async function getClientById(id: number): Promise<Client | undefined> {
   return queryOne<Client>("SELECT * FROM clients WHERE id = ?", [id]);
 }
 
-export function findClientByRif(rif: string): Client | undefined {
+export async function findClientByRif(rif: string): Promise<Client | undefined> {
   return queryOne<Client>("SELECT * FROM clients WHERE rif = ?", [rif]);
 }
 
@@ -24,25 +24,22 @@ export interface ClientInput {
   email: string;
 }
 
-export function createClient(input: ClientInput): Client {
-  const db = getDb();
-  const info = db
-    .prepare(
-      `INSERT INTO clients (name, rif, address, phone, email, active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?)`,
-    )
-    .run(input.name, input.rif, input.address, input.phone, input.email, nowIso());
-  return getClientById(Number(info.lastInsertRowid))!;
+export async function createClient(input: ClientInput): Promise<Client> {
+  const row = await queryOne<{ id: number }>(
+    `INSERT INTO clients (name, rif, address, phone, email, active, created_at) VALUES (?, ?, ?, ?, ?, 1, ?) RETURNING id`,
+    [input.name, input.rif, input.address, input.phone, input.email, nowIso()],
+  );
+  return (await getClientById(row!.id))!;
 }
 
-export function updateClient(id: number, input: ClientInput): Client {
-  const db = getDb();
-  db.prepare(
+export async function updateClient(id: number, input: ClientInput): Promise<Client> {
+  await queryAll(
     `UPDATE clients SET name = ?, rif = ?, address = ?, phone = ?, email = ? WHERE id = ?`,
-  ).run(input.name, input.rif, input.address, input.phone, input.email, id);
-  return getClientById(id)!;
+    [input.name, input.rif, input.address, input.phone, input.email, id],
+  );
+  return (await getClientById(id))!;
 }
 
-export function setClientActive(id: number, active: boolean): void {
-  const db = getDb();
-  db.prepare("UPDATE clients SET active = ? WHERE id = ?").run(active ? 1 : 0, id);
+export async function setClientActive(id: number, active: boolean): Promise<void> {
+  await queryAll("UPDATE clients SET active = ? WHERE id = ?", [active ? 1 : 0, id]);
 }

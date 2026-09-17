@@ -14,12 +14,12 @@ export default async function NotaDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const note = getDeliveryNoteById(Number(id));
+  const note = await getDeliveryNoteById(Number(id));
   if (!note) notFound();
 
-  const items = getDeliveryNoteItems(note.id);
-  const client = getClientById(note.client_id);
-  const company = getCompany();
+  const items = await getDeliveryNoteItems(note.id);
+  const client = await getClientById(note.client_id);
+  const company = await getCompany();
 
   return (
     <div className="mx-auto max-w-3xl">

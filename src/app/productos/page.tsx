@@ -12,8 +12,8 @@ export default async function ProductosPage({
   const sp = await searchParams;
   const q = (sp.q ?? "").trim().toLowerCase();
   const showAll = sp.all === "1";
-  const company = getCompany();
-  const products = listProducts({ includeInactive: showAll });
+  const company = await getCompany();
+  const products = await listProducts({ includeInactive: showAll });
   const filtered = q
     ? products.filter((p) =>
         [p.name, p.sku ?? "", p.model, p.color, p.size]

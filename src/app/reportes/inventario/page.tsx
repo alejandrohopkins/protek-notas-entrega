@@ -7,9 +7,9 @@ import { LOW_STOCK_THRESHOLD } from "@/lib/constants";
 
 export default async function InventarioReportPage() {
   await connection();
-  const products = listProducts();
-  const company = getCompany();
-  const total = totalInventoryValue();
+  const products = await listProducts();
+  const company = await getCompany();
+  const total = await totalInventoryValue();
 
   return (
     <div>
