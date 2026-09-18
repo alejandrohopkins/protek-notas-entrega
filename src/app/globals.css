@@ -79,6 +79,28 @@ body {
     padding: 0 !important;
     margin: 0 !important;
     max-width: 100% !important;
+    font-size: 11px;
+  }
+  .print-area .table-base th,
+  .print-area .table-base td {
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+  .print-area .mb-6 {
+    margin-bottom: 10px;
+  }
+  .print-area .pb-4 {
+    padding-bottom: 6px;
+  }
+  .print-area .mt-12 {
+    margin-top: 20px;
+  }
+  .print-area .text-lg {
+    font-size: 14px;
+  }
+  .print-area .print-total,
+  .print-area .print-signatures {
+    break-inside: avoid;
   }
   @page {
     margin: 12mm;

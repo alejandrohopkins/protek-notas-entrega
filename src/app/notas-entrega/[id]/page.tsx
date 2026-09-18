@@ -76,6 +76,11 @@ export default async function NotaDetailPage({
 
         <table className="table-base mb-4">
           <thead>
+            <tr className="hidden print:table-row">
+              <th colSpan={5} className="border-0 py-1 text-left text-[9px] font-normal text-slate-400">
+                {company.name} · {noteNumber(note.id)}
+              </th>
+            </tr>
             <tr>
               <th className="w-10">#</th>
               <th>Producto</th>
@@ -97,7 +102,7 @@ export default async function NotaDetailPage({
           </tbody>
         </table>
 
-        <div className="mb-6 flex justify-end">
+        <div className="print-total mb-6 flex justify-end">
           <div className="w-56">
             <div className="flex justify-between border-t border-slate-300 pt-2 text-base font-bold text-slate-900">
               <span>Total</span>
@@ -113,7 +118,7 @@ export default async function NotaDetailPage({
           </div>
         )}
 
-        <div className="mt-12 grid grid-cols-2 gap-8 text-center text-sm">
+        <div className="print-signatures mt-12 grid grid-cols-2 gap-8 text-center text-sm">
           <div>
             <div className="border-t border-slate-400 pt-2">Entregado por</div>
           </div>
