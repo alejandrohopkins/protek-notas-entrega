@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { listClients } from "@/lib/repo/clients";
-import { listProducts } from "@/lib/repo/products";
+import { listProducts, listProductReferences } from "@/lib/repo/products";
 import NuevaNotaForm from "./NuevaNotaForm";
 
 export default async function NuevaNotaPage() {
   await connection();
   const clients = await listClients();
   const products = await listProducts();
+  const references = await listProductReferences();
 
   return (
     <div>
@@ -30,7 +31,7 @@ export default async function NuevaNotaPage() {
           para poder emitir una nota de entrega.
         </p>
       ) : (
-        <NuevaNotaForm clients={clients} products={products} />
+        <NuevaNotaForm clients={clients} products={products} references={references} />
       )}
     </div>
   );

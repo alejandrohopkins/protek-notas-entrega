@@ -12,6 +12,54 @@ export async function getProductById(id: number): Promise<Product | undefined> {
   return queryOne<Product>("SELECT * FROM products WHERE id = ?", [id]);
 }
 
+export interface ReferenceSize {
+  productId: number;
+  size: string;
+  stock: number;
+  price: number;
+}
+
+export interface ProductReference {
+  key: string;
+  label: string;
+  model: string;
+  color: string;
+  unit: string;
+  price: number;
+  sizes: ReferenceSize[];
+}
+
+/** Agrupa los productos (una fila por talla) en referencias por modelo + color, para la pantalla de notas de entrega. */
+export async function listProductReferences(
+  opts: { includeInactive?: boolean } = {},
+): Promise<ProductReference[]> {
+  const products = await listProducts(opts);
+  const map = new Map<string, ProductReference>();
+
+  for (const p of products) {
+    const key = p.model || p.color ? `${p.model}|||${p.color}` : `solo-${p.id}`;
+    if (!map.has(key)) {
+      map.set(key, {
+        key,
+        label: p.model || p.color ? `${p.model} ${p.color}`.trim() : p.name,
+        model: p.model,
+        color: p.color,
+        unit: p.unit,
+        price: p.price,
+        sizes: [],
+      });
+    }
+    map.get(key)!.sizes.push({ productId: p.id, size: p.size, stock: p.stock, price: p.price });
+  }
+
+  const references = Array.from(map.values());
+  for (const ref of references) {
+    ref.sizes.sort((a, b) => Number(a.size) - Number(b.size) || a.size.localeCompare(b.size));
+  }
+  references.sort((a, b) => a.label.localeCompare(b.label));
+  return references;
+}
+
 export interface ProductInput {
   name: string;
   sku: string | null;
