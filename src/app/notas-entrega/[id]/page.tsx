@@ -19,6 +19,8 @@ export default async function NotaDetailPage({
   const items = await getDeliveryNoteItems(note.id);
   const client = await getClientById(note.client_id);
   const company = await getCompany();
+  const voided = note.status === "ANULADA";
+  const hideOnVoidedPrint = voided ? "print:hidden" : "";
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -27,15 +29,20 @@ export default async function NotaDetailPage({
           ← Notas de entrega
         </Link>
         <div className="flex items-center gap-2">
+          <Link href={`/notas-entrega/nueva?duplicateFrom=${note.id}`} className="btn-secondary btn-sm">
+            Duplicar
+          </Link>
           {note.status === "EMITIDA" && <VoidNoteButton noteId={note.id} />}
           <PrintButton />
         </div>
       </div>
 
-      <div className="print-area card">
-        {note.status === "ANULADA" && (
-          <div className="no-print mb-4">
-            <span className="badge bg-red-100 text-red-700">Esta nota está anulada</span>
+      <div className={`print-area card ${voided ? "relative overflow-hidden" : ""}`}>
+        {voided && (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+            <div className="w-[150%] -rotate-[30deg] bg-red-600/90 py-2 text-center text-2xl font-black tracking-[0.3em] text-white shadow-lg">
+              ANULADO
+            </div>
           </div>
         )}
 
@@ -74,7 +81,7 @@ export default async function NotaDetailPage({
           )}
         </div>
 
-        <table className="table-base mb-4">
+        <table className={`table-base mb-4 ${hideOnVoidedPrint}`}>
           <thead>
             <tr className="hidden print:table-row">
               <th colSpan={5} className="border-0 py-1 text-left text-[9px] font-normal text-slate-400">
@@ -102,7 +109,7 @@ export default async function NotaDetailPage({
           </tbody>
         </table>
 
-        <div className="print-total mb-6 flex justify-end">
+        <div className={`print-total mb-6 flex justify-end ${hideOnVoidedPrint}`}>
           <div className="w-56">
             <div className="flex justify-between border-t border-slate-300 pt-2 text-base font-bold text-slate-900">
               <span>Total</span>
@@ -112,13 +119,13 @@ export default async function NotaDetailPage({
         </div>
 
         {note.notes && (
-          <div className="mb-6 text-sm">
+          <div className={`mb-6 text-sm ${hideOnVoidedPrint}`}>
             <p className="font-semibold text-slate-700">Notas:</p>
             <p className="whitespace-pre-wrap text-slate-600">{note.notes}</p>
           </div>
         )}
 
-        <div className="print-signatures mt-12 grid grid-cols-2 gap-8 text-center text-sm">
+        <div className={`print-signatures mt-12 grid grid-cols-2 gap-8 text-center text-sm ${hideOnVoidedPrint}`}>
           <div>
             <div className="border-t border-slate-400 pt-2">Entregado por</div>
           </div>

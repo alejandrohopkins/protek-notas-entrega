@@ -39,13 +39,21 @@ export default function NuevaNotaForm({
   clients,
   products,
   references,
+  initialClientId,
+  initialLines,
+  initialNotes,
+  duplicatedFromLabel,
 }: {
   clients: ClientOption[];
   products: ProductOption[];
   references: ReferenceOption[];
+  initialClientId?: number;
+  initialLines?: Line[];
+  initialNotes?: string;
+  duplicatedFromLabel?: string;
 }) {
   const [state, formAction, pending] = useActionState(createDeliveryNoteAction, {});
-  const [lines, setLines] = useState<Line[]>([]);
+  const [lines, setLines] = useState<Line[]>(initialLines ?? []);
   const [selectedRefKey, setSelectedRefKey] = useState("");
   const [batchPrice, setBatchPrice] = useState("");
   const [sizeQty, setSizeQty] = useState<Record<string, string>>({});
@@ -100,6 +108,12 @@ export default function NuevaNotaForm({
 
   return (
     <form action={formAction} className="space-y-4">
+      {duplicatedFromLabel && (
+        <p className="alert-success">
+          Duplicando la nota {duplicatedFromLabel}. Ajusta lo que haga falta antes de emitirla — se creará
+          como una nota nueva con su propio número.
+        </p>
+      )}
       {state.error && <p className="alert-error">{state.error}</p>}
 
       <div className="card grid gap-4 sm:grid-cols-2">
@@ -107,7 +121,13 @@ export default function NuevaNotaForm({
           <label className="label" htmlFor="clientId">
             Cliente
           </label>
-          <select id="clientId" name="clientId" className="select" required defaultValue="">
+          <select
+            id="clientId"
+            name="clientId"
+            className="select"
+            required
+            defaultValue={initialClientId ?? ""}
+          >
             <option value="" disabled>
               Selecciona un cliente…
             </option>
@@ -250,7 +270,7 @@ export default function NuevaNotaForm({
                 const price = Number(line.unitPrice) || 0;
                 const overStock = product ? qty > product.stock : false;
                 return (
-                  <tr key={line.productId}>
+                  <tr key={`${line.productId}-${index}`}>
                     <td>
                       <input type="hidden" name="productId" value={line.productId} />
                       {product?.name ?? "—"}
@@ -312,6 +332,7 @@ export default function NuevaNotaForm({
           rows={2}
           className="input"
           placeholder="Observaciones de la entrega…"
+          defaultValue={initialNotes}
         />
       </div>
 
