@@ -63,7 +63,7 @@ export default async function NotaDetailPage({
           </div>
           <div className="text-right">
             <p className="text-lg font-bold uppercase tracking-wide text-slate-900">Nota de entrega</p>
-            <p className="text-sm text-slate-600">{noteNumber(note.id)}</p>
+            <p className="text-base font-bold text-blue-600">{noteNumber(note.id)}</p>
             <p className="text-sm text-slate-600">Fecha: {formatDate(note.date)}</p>
             {note.status === "ANULADA" && <p className="font-semibold text-red-600">ANULADA</p>}
           </div>
