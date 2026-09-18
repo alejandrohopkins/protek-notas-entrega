@@ -15,12 +15,24 @@ export default async function FacturadoPage({
   const rows = await billedByClient({ from, to });
   const total = await totalBilled({ from, to });
 
+  const exportParams = new URLSearchParams();
+  if (from) exportParams.set("from", from);
+  if (to) exportParams.set("to", to);
+  const exportHref = `/reportes/facturado/export${exportParams.size ? `?${exportParams}` : ""}`;
+
   return (
     <div>
-      <h1 className="mb-1 text-xl font-semibold text-slate-900">Facturado por cliente</h1>
-      <p className="mb-4 text-sm text-slate-500">
-        Suma de las notas de entrega emitidas (no anuladas) por cliente.
-      </p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="mb-1 text-xl font-semibold text-slate-900">Facturado por cliente</h1>
+          <p className="text-sm text-slate-500">
+            Suma de las notas de entrega emitidas (no anuladas) por cliente.
+          </p>
+        </div>
+        <a href={exportHref} className="btn-secondary btn-sm">
+          Exportar a Excel
+        </a>
+      </div>
 
       <form className="card mb-4 flex flex-wrap items-end gap-3">
         <div>

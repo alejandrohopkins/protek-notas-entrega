@@ -13,8 +13,15 @@ export default async function InventarioReportPage() {
 
   return (
     <div>
-      <h1 className="mb-1 text-xl font-semibold text-slate-900">Inventario actual</h1>
-      <p className="mb-4 text-sm text-slate-500">Existencias y valor de cada producto activo.</p>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="mb-1 text-xl font-semibold text-slate-900">Inventario actual</h1>
+          <p className="text-sm text-slate-500">Existencias y valor de cada producto activo.</p>
+        </div>
+        <a href="/reportes/inventario/export" className="btn-secondary btn-sm">
+          Exportar a Excel
+        </a>
+      </div>
 
       <div className="card overflow-x-auto">
         {products.length === 0 ? (

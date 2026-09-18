@@ -21,6 +21,12 @@ export default async function KardexPage({
     ? await listMovements({ productId, from: sp.from || undefined, to: sp.to || undefined })
     : [];
 
+  const exportParams = new URLSearchParams();
+  if (productId) exportParams.set("productId", String(productId));
+  if (sp.from) exportParams.set("from", sp.from);
+  if (sp.to) exportParams.set("to", sp.to);
+  const exportHref = `/kardex/export?${exportParams}`;
+
   return (
     <div>
       <h1 className="mb-1 text-xl font-semibold text-slate-900">Kardex de inventario</h1>
@@ -64,11 +70,16 @@ export default async function KardexPage({
 
       {product && (
         <div className="card overflow-x-auto">
-          <div className="mb-3 flex items-baseline justify-between">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-semibold text-slate-900">{product.name}</h2>
-            <span className="text-sm text-slate-500">
-              Saldo actual: <span className="font-semibold text-slate-800">{product.stock} {product.unit}</span>
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-500">
+                Saldo actual: <span className="font-semibold text-slate-800">{product.stock} {product.unit}</span>
+              </span>
+              <a href={exportHref} className="btn-secondary btn-sm">
+                Exportar a Excel
+              </a>
+            </div>
           </div>
           {movements.length === 0 ? (
             <p className="text-sm text-slate-500">No hay movimientos en este período.</p>
