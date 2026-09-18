@@ -51,19 +51,33 @@ export async function createDeliveryNoteAction(
   redirect(`/notas-entrega/${noteId}`);
 }
 
-export async function voidDeliveryNoteAction(formData: FormData): Promise<void> {
+const VOID_PIN = "2334";
+
+export async function voidDeliveryNoteAction(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   const id = Number(formData.get("id"));
-  if (id) {
-    try {
-      await voidDeliveryNote(id);
-    } catch (err) {
-      console.error(err);
-    }
+  if (!id) return { error: "Nota inválida." };
+
+  const pin = optionalString(formData.get("pin"));
+  if (pin !== VOID_PIN) {
+    return { error: "Clave incorrecta. No se anuló la nota." };
   }
+
+  try {
+    await voidDeliveryNote(id);
+  } catch (err) {
+    if (err instanceof Error) return { error: err.message };
+    console.error(err);
+    return { error: "No se pudo anular la nota." };
+  }
+
   revalidatePath("/notas-entrega");
   revalidatePath(`/notas-entrega/${id}`);
   revalidatePath("/productos");
   revalidatePath("/reportes/inventario");
   revalidatePath("/reportes/facturado");
   revalidatePath("/kardex");
+  return { success: "Nota anulada." };
 }

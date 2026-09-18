@@ -3,10 +3,9 @@ import { notFound } from "next/navigation";
 import { getDeliveryNoteById, getDeliveryNoteItems } from "@/lib/repo/deliveryNotes";
 import { getClientById } from "@/lib/repo/clients";
 import { getCompany } from "@/lib/repo/company";
-import { voidDeliveryNoteAction } from "@/lib/actions/deliveryNotes";
 import { formatDate, formatMoney, noteNumber } from "@/lib/format";
 import PrintButton from "./PrintButton";
-import ConfirmForm from "@/app/components/ConfirmForm";
+import VoidNoteButton from "./VoidNoteButton";
 
 export default async function NotaDetailPage({
   params,
@@ -28,15 +27,7 @@ export default async function NotaDetailPage({
           ← Notas de entrega
         </Link>
         <div className="flex items-center gap-2">
-          {note.status === "EMITIDA" && (
-            <ConfirmForm
-              action={voidDeliveryNoteAction}
-              hiddenFields={{ id: note.id }}
-              confirmMessage="¿Anular esta nota de entrega? El inventario entregado se devolverá al stock."
-              label="Anular nota"
-              className="btn-secondary btn-sm text-red-600"
-            />
-          )}
+          {note.status === "EMITIDA" && <VoidNoteButton noteId={note.id} />}
           <PrintButton />
         </div>
       </div>
